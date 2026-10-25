@@ -1,0 +1,8 @@
+node_modules
+dist
+.vercel
+.taste-skill
+*.log
+.agents
+.claude
+skills-lock.json
