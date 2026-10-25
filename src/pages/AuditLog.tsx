@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
-import { ShieldAlert, ShieldCheck } from 'lucide-react'
+import { useSearchParams } from 'react-router-dom'
+import { LoaderCircle, ShieldAlert, ShieldCheck } from 'lucide-react'
 import { TopBar } from '../components/TopBar'
 import { AuditRow } from '../components/AuditRow'
 import { useStore } from '../state/DemoStore'
@@ -22,7 +23,14 @@ export default function AuditLog() {
   const { chain, chainReady, verify, tamper, setTamper, tamperSeq } = useStore()
   const [verdict, setVerdict] = useState<ChainVerdict | null>(null)
   const [busy, setBusy] = useState(false)
-  const [type, setType] = useState<AuditType | ''>('')
+  const [params, setParams] = useSearchParams()
+  const type = (TYPES.includes(params.get('type') as AuditType) ? params.get('type') : '') as AuditType | ''
+  const setType = (t: AuditType | '') => {
+    const next = new URLSearchParams(params)
+    if (t) next.set('type', t)
+    else next.delete('type')
+    setParams(next, { replace: true })
+  }
   const [limit, setLimit] = useState(60)
 
   useEffect(() => setVerdict(null), [tamper, chain.length])
@@ -32,7 +40,8 @@ export default function AuditLog() {
 
   const run = async () => {
     setBusy(true)
-    const v = await verify()
+    // Hold the busy state for at least 400 ms so the result never flickers in.
+    const [v] = await Promise.all([verify(), new Promise((r) => setTimeout(r, 400))])
     setVerdict(v)
     setBusy(false)
     if (!v.ok) {
@@ -53,8 +62,9 @@ export default function AuditLog() {
 
         <section aria-label="Chain verification" className="mb-4 rounded-lg bg-surface border border-line">
           <div className="flex flex-wrap items-center gap-3 p-4">
-            <button onClick={run} disabled={!chainReady || busy} className="h-9 rounded-md bg-action px-4 font-medium text-white hover:bg-action-dark disabled:bg-action/45 active:translate-y-px">
-              {busy ? 'Verifying…' : 'Verify chain'}
+            <button onClick={run} disabled={!chainReady || busy} aria-busy={busy} className="flex h-9 items-center gap-2 rounded-md bg-action px-4 font-medium text-white hover:bg-action-dark disabled:bg-action/45 active:translate-y-px">
+              {busy && <LoaderCircle size={15} className="animate-spin motion-reduce:animate-none" aria-hidden />}
+              Verify chain
             </button>
             <div className="min-w-0 flex-1" aria-live="polite">
               {!verdict && <span className="num text-muted">{chainReady ? `${chain.length} events sealed. Recompute every hash to check nothing was changed.` : 'Sealing events…'}</span>}
@@ -62,7 +72,7 @@ export default function AuditLog() {
                 <span className="flex items-center gap-2 font-medium text-st-verified">
                   <ShieldCheck size={18} aria-hidden />
                   <span className="num">
-                    Chain intact · {verdict.count} events · head <span className="font-mono text-[13px]">{verdict.head.slice(0, 4)}…</span>
+                    Chain intact · {verdict.count} events · head <span translate="no" className="font-mono text-[13px]">{verdict.head.slice(0, 4)}…</span>
                   </span>
                 </span>
               )}

@@ -1,5 +1,5 @@
-import { useEffect } from 'react'
-import { Route, Routes, useLocation } from 'react-router-dom'
+import { Route, Routes } from 'react-router-dom'
+import { useScrollRestoration } from './lib/hooks'
 import { BottomBar, NavRail } from './components/NavRail'
 import { Toasts } from './components/Toast'
 import Queue from './pages/Queue'
@@ -9,8 +9,7 @@ import AuditLog from './pages/AuditLog'
 import NotFound from './pages/NotFound'
 
 export default function App() {
-  const { pathname } = useLocation()
-  useEffect(() => window.scrollTo(0, 0), [pathname])
+  useScrollRestoration()
   return (
     <div className="min-h-dvh">
       <a href="#main" className="sr-only focus:not-sr-only focus:fixed focus:left-3 focus:top-3 focus:z-50 focus:rounded-md focus:bg-surface focus:px-3 focus:py-2">

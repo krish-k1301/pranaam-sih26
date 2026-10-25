@@ -22,10 +22,10 @@ export const fmtDateTime = (iso: string) => {
 export const fmtTime = (iso: string) => parts(iso).hms
 
 export function fmtDuration(ms: number): string {
-  if (ms < 1000) return `${ms} ms`
+  if (ms < 1000) return `${ms} ms`
   const s = Math.round(ms / 1000)
-  if (s < 60) return `${s} s`
-  return `${Math.floor(s / 60)} min ${s % 60} s`
+  if (s < 60) return `${s} s`
+  return `${Math.floor(s / 60)} min ${s % 60} s`
 }
 
 export const shortHash = (h: string, n = 8) => (h ? `${h.slice(0, n)}…` : '—')

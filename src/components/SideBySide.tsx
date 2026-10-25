@@ -47,12 +47,12 @@ export function SideBySide({ left, right, matched, similarity }: { left: Side; r
               <div className="text-muted">
                 {s.current ? (
                   <>
-                    This application · <span className="font-mono text-[12px]">{s.appId}</span>
+                    This application · <span translate="no" className="font-mono text-[12px]">{s.appId}</span>
                   </>
                 ) : (
                   <>
                     Other application ·{' '}
-                    <Link to={`/applications/${s.appId}`} className="font-mono text-[12px] hover:underline">
+                    <Link to={`/applications/${s.appId}`} translate="no" className="font-mono text-[12px] hover:underline">
                       {s.appId}
                     </Link>
                   </>

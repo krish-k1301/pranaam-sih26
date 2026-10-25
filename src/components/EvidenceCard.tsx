@@ -65,7 +65,7 @@ export function EvidenceCard({ e, onShow }: { e: Evidence; onShow?: (docId: stri
             <Row k="Request">{e.requestRef}</Row>
             <Row k="Response">{e.summary}</Row>
             <Row k="Received">{fmtDateTime(e.at)}</Row>
-            <Row k="Response hash">{e.responseHash ? <span className="font-mono text-[12px]" title={e.responseHash}>{shortHash(e.responseHash, 16)}</span> : <span className="text-muted">No response body</span>}</Row>
+            <Row k="Response hash">{e.responseHash ? <span translate="no" className="font-mono text-[12px]" title={e.responseHash}>{shortHash(e.responseHash, 16)}</span> : <span className="text-muted">No response body</span>}</Row>
           </>
         )}
         {e.kind === 'cross' && (
@@ -73,11 +73,11 @@ export function EvidenceCard({ e, onShow }: { e: Evidence; onShow?: (docId: stri
             <Row k="Institution">{e.otherInstitution}</Row>
             <Row k="Application">
               {e.otherAppId.startsWith('A-2027') ? (
-                <Link to={`/applications/${e.otherAppId}`} className="font-mono text-[12px] text-action hover:underline">
+                <Link to={`/applications/${e.otherAppId}`} translate="no" className="font-mono text-[12px] text-action hover:underline">
                   {e.otherAppId}
                 </Link>
               ) : (
-                <span className="font-mono text-[12px]">{e.otherAppId}</span>
+                <span translate="no" className="font-mono text-[12px]">{e.otherAppId}</span>
               )}
               {!e.otherAppId.startsWith('A-2027') && <span className="text-muted"> (2026-27, closed)</span>}
             </Row>

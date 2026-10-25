@@ -220,7 +220,7 @@ function buildApp(s: Spec): AppBundle {
       issued: '18.07.2025',
       validUntil: has('expired-noc') ? '30.06.2027' : '31.03.2029',
       uploadedAt: up(2900),
-      area: `${(int(rng, 120, 210) * 100).toLocaleString('en-IN')} sq m`,
+      area: `${(int(rng, 120, 210) * 100).toLocaleString('en-IN')} sq m`,
       floors: 'Ground + 3',
     }),
   )
@@ -231,7 +231,7 @@ function buildApp(s: Spec): AppBundle {
       certNo: `${s.city.slice(0, 3).toUpperCase()}MC/CC/${int(rng, 2012, 2020)}/${int(rng, 100, 4999)}`,
       issued: '22.11.2018',
       uploadedAt: up(2880),
-      area: `${(int(rng, 120, 210) * 100).toLocaleString('en-IN')} sq m`,
+      area: `${(int(rng, 120, 210) * 100).toLocaleString('en-IN')} sq m`,
       floors: 'Ground + 3',
       classroomArea: has('classroom') ? Math.round(s.intake * 0.94) : undefined,
     }),
@@ -292,7 +292,7 @@ function buildApp(s: Spec): AppBundle {
         }),
       )
     } else if (e === 'land') {
-      add(landDocument(ctx, ++n, { surveyNo: `${int(rng, 10, 400)}/${int(rng, 1, 9)}`, area: `${int(rng, 8, 22)}.${int(rng, 0, 9)} acres`, uploadedAt: up(2000) }))
+      add(landDocument(ctx, ++n, { surveyNo: `${int(rng, 10, 400)}/${int(rng, 1, 9)}`, area: `${int(rng, 8, 22)}.${int(rng, 0, 9)} acres`, uploadedAt: up(2000) }))
     } else if (e === 'photo') {
       photo = add(infraPhoto(ctx, ++n, { caption: 'CSE Lab 1', institution: ctx.institution, year: '2027-28', rows: int(rng, 2, 3), hueShift: int(rng, -12, 12) }, up(1900)))
     } else if (e === 'photo2') {
@@ -324,10 +324,10 @@ function buildApp(s: Spec): AppBundle {
       case 'expired-noc':
         plant(fire.id, 'R-NOC-001', 'fail', {
           title: 'Fire NOC expires before the academic year starts',
-          reason: 'The NOC is valid until 30 Jun 2027, which is 32 days before the 2027-28 academic year starts on 1 Aug 2027.',
+          reason: 'The NOC is valid until 30 Jun 2027, which is 32 days before the 2027-28 academic year starts on 1 Aug 2027.',
           category: 'Expired', severity: 'major', confidence: 0.99, checkVersion: 2, aphClause: 'APH 2024-27, clause 2.4.3(f)',
           statusEffect: 'expired', viewer: 'document', page: 1, fieldKeys: ['valid_until'],
-          evidence: [region(fire, 'valid_until'), { kind: 'structural', fact: 'Validity compared with the academic calendar', values: [['Valid until', '30 Jun 2027'], ['Academic year starts', '1 Aug 2027'], ['Gap', '32 days']] }],
+          evidence: [region(fire, 'valid_until'), { kind: 'structural', fact: 'Validity compared with the academic calendar', values: [['Valid until', '30 Jun 2027'], ['Academic year starts', '1 Aug 2027'], ['Gap', '32 days']] }],
         })
         break
       case 'intake-mismatch':
@@ -373,10 +373,10 @@ function buildApp(s: Spec): AppBundle {
         if (acc)
           plant(acc.id, 'AUTH-QR-MATCH', 'fail', {
             title: 'Printed validity differs from the QR code',
-            reason: 'The certificate prints "valid till 30.06.2030", but its QR code payload gives a validity of 31 Dec 2027.',
+            reason: 'The certificate prints “valid till 30.06.2030”, but its QR code payload gives a validity of 31 Dec 2027.',
             category: 'Inconsistent', severity: 'major', confidence: 0.98, checkVersion: 1,
             statusEffect: 'mismatch', viewer: 'document', page: 1, fieldKeys: ['valid_until_printed', 'qr_payload'],
-            evidence: [region(acc, 'valid_until_printed'), region(acc, 'qr_payload'), { kind: 'structural', fact: 'Printed text compared with the decoded QR payload', values: [['Printed', '30 Jun 2030'], ['QR payload', '31 Dec 2027'], ['Difference', '2 years 6 months']] }],
+            evidence: [region(acc, 'valid_until_printed'), region(acc, 'qr_payload'), { kind: 'structural', fact: 'Printed text compared with the decoded QR payload', values: [['Printed', '30 Jun 2030'], ['QR payload', '31 Dec 2027'], ['Difference', '2 years 6 months']] }],
           })
         break
       case 'source-unavailable':
@@ -385,7 +385,7 @@ function buildApp(s: Spec): AppBundle {
           reason: `The ${st.dte} verification service timed out, so the NOC reference could not be confirmed.`,
           category: 'Verification', severity: 'minor', confidence: 1, checkVersion: 1,
           statusEffect: 'source_unavailable', viewer: 'document', page: 1, fieldKeys: ['ref_number'],
-          evidence: [region(dte, 'ref_number'), { kind: 'issuer', sourceName: st.dte, requestRef: `VRQ-${s.id.slice(2, 6)}-${int(rng, 10000, 99999)}`, summary: 'No response within 30 s. Next automatic retry at 18:00.', at: toIst(sub + 2 * 60_000), responseHash: '', outcome: 'Timed out' }],
+          evidence: [region(dte, 'ref_number'), { kind: 'issuer', sourceName: st.dte, requestRef: `VRQ-${s.id.slice(2, 6)}-${int(rng, 10000, 99999)}`, summary: 'No response within 30 s. Next automatic retry at 18:00.', at: toIst(sub + 2 * 60_000), responseHash: '', outcome: 'Timed out' }],
         })
         break
       case 'dte-cap':
@@ -410,11 +410,11 @@ function buildApp(s: Spec): AppBundle {
       case 'classroom': {
         const area = Math.round(s.intake * 0.94)
         plant(bcc.id, 'R-CLS-010', 'fail', {
-          title: 'Classroom area below 1.1 sq m per student',
-          reason: `The building schedule shows ${area.toLocaleString('en-IN')} sq m of classrooms for an intake of ${s.intake}, which is 0.94 sq m per student.`,
+          title: 'Classroom area below 1.1 sq m per student',
+          reason: `The building schedule shows ${area.toLocaleString('en-IN')} sq m of classrooms for an intake of ${s.intake}, which is 0.94 sq m per student.`,
           category: 'Non-compliant', severity: 'minor', confidence: 0.88, checkVersion: 1, aphClause: 'APH 2024-27, clause 4.3',
           statusEffect: 'manual_review', viewer: 'document', page: 2, fieldKeys: ['sched_1'],
-          evidence: [region(bcc, 'sched_1'), { kind: 'structural', fact: 'Area per student', values: [['Classroom area', `${area.toLocaleString('en-IN')} sq m`], ['Intake', String(s.intake)], ['Per student', '0.94 sq m'], ['Required', '1.1 sq m']] }],
+          evidence: [region(bcc, 'sched_1'), { kind: 'structural', fact: 'Area per student', values: [['Classroom area', `${area.toLocaleString('en-IN')} sq m`], ['Intake', String(s.intake)], ['Per student', '0.94 sq m'], ['Required', '1.1 sq m']] }],
         })
         break
       }
@@ -422,12 +422,12 @@ function buildApp(s: Spec): AppBundle {
         if (photo)
           plant(photo.id, 'XAPP-PHOTO', 'fail', {
             title: 'Lab photo nearly identical to another institution’s',
-            reason: 'The "CSE Lab 1" photo matches a photo submitted by Bundelkhand Institute of Technology, Jhansi for 2026-27 at 0.94 perceptual similarity.',
+            reason: 'The “CSE Lab 1” photo matches a photo submitted by Bundelkhand Institute of Technology, Jhansi for 2026-27 at 0.94 perceptual similarity.',
             category: 'Anomaly', severity: 'major', confidence: 0.9, checkVersion: 1,
             statusEffect: 'manual_review', viewer: 'photo', page: 1, fieldKeys: [],
             evidence: [
               { kind: 'cross', otherAppId: 'A-2026-003127', otherInstitution: 'Bundelkhand Institute of Technology, Jhansi', otherPhoto: { caption: 'Computer laboratory', institution: 'Bundelkhand Institute of Technology, Jhansi', year: '2026-27', rows: photo.photo?.rows ?? 3, hueShift: (photo.photo?.hueShift ?? 0) + 18 }, matched: 'Perceptual hash', similarity: 0.94 },
-              { kind: 'structural', fact: 'Image fingerprints', values: [['This photo', '7e10 a4c2 59bd 0f63'], ['2026-27 photo', '7e10 a4c6 59bd 0e63'], ['Bits that differ', '4 of 64'], ['Mirrored', 'No']] },
+              { kind: 'structural', fact: 'Image fingerprints', values: [['This photo', '7e10 a4c2 59bd 0f63'], ['2026-27 photo', '7e10 a4c6 59bd 0e63'], ['Bits that differ', '4 of 64'], ['Mirrored', 'No']] },
             ],
           })
         break
@@ -537,7 +537,7 @@ function buildApp(s: Spec): AppBundle {
     ],
     infra_photo: [
       ['XAPP-PHOTO', 1, 'Cross-application', 'Photo not reused from another application'],
-      ['INFRA-EXIF', 1, 'Infrastructure', 'Photo taken within the last 12 months'],
+      ['INFRA-EXIF', 1, 'Infrastructure', 'Photo taken within the last 12 months'],
       ['INFRA-GEO', 1, 'Infrastructure', 'Photo location inside the campus boundary'],
       ['R-LAB-011', 1, 'Rule', 'Laboratories per programme'],
     ],

@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
-import { Link, useParams } from 'react-router-dom'
+import { useMemo, useRef, useState } from 'react'
+import { Link, useParams, useSearchParams } from 'react-router-dom'
 import { Check, ChevronDown, ChevronRight, Info, X } from 'lucide-react'
 import { getBundle } from '../data'
 import type { AppBundle } from '../data/bundle'
@@ -11,6 +11,7 @@ import { EvidenceCard } from '../components/EvidenceCard'
 import { ReviewDialog } from '../components/ReviewDialog'
 import { AuditRow } from '../components/AuditRow'
 import { useStore } from '../state/DemoStore'
+import { useDialog } from '../lib/hooks'
 import { deriveBundle, type Derived } from '../lib/derive'
 import { REVIEW_LABEL, SEVERITY_ORDER, reviewStateOf } from '../lib/status'
 import { fmtDate, fmtDateTime, fmtDuration, fmtIsoDate, pct, shortHash } from '../lib/format'
@@ -44,13 +45,35 @@ function Review({ b }: { b: AppBundle }) {
   const store = useStore()
   const { reviews } = store
   const d = useMemo(() => deriveBundle(b, reviews), [b, reviews])
-  const [tab, setTab] = useState<Tab>('findings')
+  // Tab, selected finding, open document & breakdown live in the URL so any view can be shared or bookmarked.
+  const [params, setParams] = useSearchParams()
+  const setParam = (k: string, v: string | null, push = false) => {
+    const next = new URLSearchParams(params)
+    if (v) next.set(k, v)
+    else next.delete(k)
+    setParams(next, { replace: !push })
+  }
+  const TABS: Tab[] = ['findings', 'documents', 'checks', 'audit']
+  const tab: Tab = TABS.includes(params.get('tab') as Tab) ? (params.get('tab') as Tab) : 'findings'
+  const setTab = (t: Tab) => setParam('tab', t === 'findings' ? null : t, true)
   const sorted = useMemo(() => [...b.findings].sort((x, y) => SEVERITY_ORDER.indexOf(x.severity) - SEVERITY_ORDER.indexOf(y.severity)), [b])
-  const [selId, setSelId] = useState<string | undefined>(sorted[0]?.id)
+  const selId = b.findings.some((f) => f.id === params.get('finding')) ? params.get('finding')! : sorted[0]?.id
+  const setSelId = (id: string) => setParam('finding', id === sorted[0]?.id ? null : id)
   const [focus, setFocus] = useState<{ docId: string; page: number; keys: string[] } | null>(null)
-  const [openDoc, setOpenDoc] = useState<string | null>(null)
+  const openDoc = b.documents.some((x) => x.id === params.get('doc')) ? params.get('doc') : null
+  const setOpenDoc = (id: string | null) => setParam('doc', id, Boolean(id))
   const [dialog, setDialog] = useState<null | { kind: 'dismiss' | 'rectify'; finding: Finding } | { kind: 'app-rectify' | 'app-inspect' }>(null)
-  const [showBreakdown, setShowBreakdown] = useState(false)
+  const showBreakdown = params.get('breakdown') === '1'
+  const setShowBreakdown = (v: boolean) => setParam('breakdown', v ? '1' : null)
+  const tabRefs = useRef<Record<string, HTMLButtonElement | null>>({})
+  const onTabKey = (e: React.KeyboardEvent, i: number) => {
+    const n = TABS.length
+    const j = e.key === 'ArrowRight' ? (i + 1) % n : e.key === 'ArrowLeft' ? (i - 1 + n) % n : e.key === 'Home' ? 0 : e.key === 'End' ? n - 1 : -1
+    if (j < 0) return
+    e.preventDefault()
+    setTab(TABS[j])
+    tabRefs.current[TABS[j]]?.focus()
+  }
   const viewerRef = useRef<HTMLDivElement>(null)
 
   const sel = b.findings.find((f) => f.id === selId)
@@ -88,7 +111,7 @@ function Review({ b }: { b: AppBundle }) {
             Queue
           </Link>
           <ChevronRight size={14} aria-hidden />
-          <span className="font-mono text-[12px] text-ink">{b.app.id}</span>
+          <span translate="no" className="font-mono text-[12px] text-ink">{b.app.id}</span>
         </nav>
 
         <Header b={b} d={d} showBreakdown={showBreakdown} setShowBreakdown={setShowBreakdown} onRectify={() => setDialog({ kind: 'app-rectify' })} onInspect={() => setDialog({ kind: 'app-inspect' })} />
@@ -104,11 +127,18 @@ function Review({ b }: { b: AppBundle }) {
         )}
 
         <div role="tablist" aria-label="Application sections" className="mb-4 flex gap-5 overflow-x-auto border-b border-line">
-          {tabs.map((t) => (
+          {tabs.map((t, i) => (
             <button
               key={t.id}
+              ref={(el) => {
+                tabRefs.current[t.id] = el
+              }}
               role="tab"
+              id={`tab-${t.id}`}
               aria-selected={tab === t.id}
+              aria-controls={`panel-${t.id}`}
+              tabIndex={tab === t.id ? 0 : -1}
+              onKeyDown={(e) => onTabKey(e, i)}
               onClick={() => setTab(t.id)}
               className={`-mb-px flex flex-none items-center gap-1.5 border-b-2 px-1 pb-2.5 pt-1 text-[14px] ${tab === t.id ? 'border-ink font-medium text-ink' : 'border-transparent text-muted hover:text-ink'}`}
             >
@@ -118,6 +148,7 @@ function Review({ b }: { b: AppBundle }) {
           ))}
         </div>
 
+        <div role="tabpanel" id={`panel-${tab}`} aria-labelledby={`tab-${tab}`}>
         {tab === 'findings' &&
           (b.findings.length === 0 ? (
             <p className="rounded-lg bg-surface px-4 py-4 border border-line">
@@ -160,6 +191,7 @@ function Review({ b }: { b: AppBundle }) {
             )}
           </section>
         )}
+        </div>
       </main>
 
       {openDoc && <DocDrawer b={b} d={d} docId={openDoc} onClose={() => setOpenDoc(null)} />}
@@ -243,11 +275,11 @@ function Header({
       <div className="flex flex-col gap-4 p-4 lg:flex-row lg:items-start">
         <dl className="grid min-w-0 flex-1 grid-cols-2 gap-x-6 gap-y-2 text-[13px] sm:grid-cols-3 xl:grid-cols-6">
           {[
-            ['Permanent ID', <span className="font-mono">{a.permanentId}</span>],
-            ['Application', <span className="font-mono">{a.id}</span>],
+            ['Permanent ID', <span translate="no" className="font-mono">{a.permanentId}</span>],
+            ['Application', <span translate="no" className="font-mono">{a.id}</span>],
             ['Category', a.category],
             ['Academic year', a.academicYear],
-            ['State and region', `${a.city}, ${a.state} · ${a.region}`],
+            ['State & region', `${a.city}, ${a.state} · ${a.region}`],
             ['Submitted', fmtDate(a.submittedAt)],
           ].map(([k, v], i) => (
             <div key={i} className="min-w-0">
@@ -257,11 +289,11 @@ function Header({
           ))}
         </dl>
         <div className="flex flex-wrap gap-2 lg:flex-none">
-          <button onClick={onInspect} className="h-9 rounded-md border border-control bg-surface px-3.5 font-medium hover:bg-raised active:translate-y-px">
-            Recommend inspection
+          <button onClick={onInspect} className="h-9 rounded-md border border-control bg-surface px-3.5 font-medium hover:border-ink-2 hover:bg-raised active:translate-y-px">
+            Recommend inspection…
           </button>
           <button onClick={onRectify} className="h-9 rounded-md bg-action px-3.5 font-medium text-white hover:bg-action-dark active:translate-y-px">
-            Request rectification
+            Request rectification…
           </button>
         </div>
       </div>
@@ -295,7 +327,7 @@ function Header({
       </div>
       <p className="flex items-start gap-2 border-t border-rule bg-raised px-4 py-2 text-[13px] leading-5 text-muted rounded-b-lg">
         <Info size={15} className="mt-0.5 flex-none" aria-hidden />
-        Findings are indicators for review, not conclusions. Every decision on this application is made by a scrutiny officer.
+        Findings are indicators for review, not conclusions. You make every decision on this application.
       </p>
     </section>
   )
@@ -353,8 +385,8 @@ function FindingsList({ findings, d, b, selId, onSelect }: { findings: Finding[]
 
 const ACTIONS: { a: ReviewAction; label: string; state: ReviewState }[] = [
   { a: 'confirm', label: 'Confirm', state: 'confirmed' },
-  { a: 'dismiss', label: 'Dismiss', state: 'dismissed' },
-  { a: 'rectify', label: 'Request rectification', state: 'rectification_requested' },
+  { a: 'dismiss', label: 'Dismiss…', state: 'dismissed' },
+  { a: 'rectify', label: 'Request rectification…', state: 'rectification_requested' },
   { a: 'inspect', label: 'Recommend inspection', state: 'inspection_recommended' },
 ]
 
@@ -389,7 +421,7 @@ function EvidencePanel({
         <dl className="mt-3 grid grid-cols-[88px_1fr] gap-y-1 text-[13px]">
           <dt className="text-muted">{isRule ? 'Rule' : 'Check'}</dt>
           <dd>
-            <span className="font-mono text-[12px]">{f.checkId}</span> <span className="text-muted">v{f.checkVersion}</span>
+            <span translate="no" className="font-mono text-[12px]">{f.checkId}</span> <span className="text-muted">v{f.checkVersion}</span>
             {isRule && (
               <Link to={`/rules?rule=${f.checkId}`} className="ml-2 text-action hover:underline">
                 Open rule
@@ -428,7 +460,7 @@ function EvidencePanel({
                   onClick={() => onAct(a)}
                   disabled={current}
                   className={`flex min-h-9 items-center justify-center gap-1.5 rounded-md px-2 py-1.5 text-[13px] font-medium leading-4 active:translate-y-px ${
-                    a === 'confirm' && !current ? 'bg-action text-white hover:bg-action-dark' : current ? 'bg-active text-muted' : 'border border-control bg-surface hover:bg-raised'
+                    a === 'confirm' && !current ? 'bg-action text-white hover:bg-action-dark' : current ? 'bg-active text-muted' : 'border border-control bg-surface hover:border-ink-2 hover:bg-raised'
                   }`}
                 >
                   {current && <Check size={14} aria-hidden />}
@@ -478,7 +510,7 @@ function DocumentsTab({ b, d, onOpen }: { b: AppBundle; d: Derived; onOpen: (id:
                   <td className="max-w-[220px] px-3 py-3 text-muted">{doc.issuer}</td>
                   <td className="num px-3 py-3 text-right">{doc.pages}</td>
                   <td className="num whitespace-nowrap px-3 py-3 text-muted">{fmtIsoDate(doc.uploadedAt)}</td>
-                  <td className="px-3 py-3 font-mono text-[12px]" title={doc.sha256}>
+                  <td translate="no" className="px-3 py-3 font-mono text-[12px]" title={doc.sha256}>
                     {shortHash(doc.sha256, 12)}
                   </td>
                   <td className="px-3 py-3">
@@ -502,7 +534,7 @@ function DocumentsTab({ b, d, onOpen }: { b: AppBundle; d: Derived; onOpen: (id:
                   <StatusChip status={s.status} />
                 </span>
                 <span className="mt-1 block text-[13px] leading-5 text-muted">
-                  {doc.issuer} · {doc.pages} {doc.pages === 1 ? 'page' : 'pages'} · <span className="font-mono text-[12px]">{shortHash(doc.sha256, 8)}</span>
+                  {doc.issuer} · {doc.pages} {doc.pages === 1 ? 'page' : 'pages'} · <span translate="no" className="font-mono text-[12px]">{shortHash(doc.sha256, 8)}</span>
                 </span>
                 <span className="block text-[13px] leading-5 text-muted">Because: {s.because}</span>
               </button>
@@ -556,7 +588,7 @@ function ChecksTab({ b, raised }: { b: AppBundle; raised: number }) {
             {list.map((c) => (
               <tr key={c.id} className="border-b border-rule last:border-0">
                 <td className="whitespace-nowrap px-3 py-2.5">
-                  <span className="font-mono text-[12px]">{c.checkId}</span> <span className="text-[12px] text-muted">v{c.version}</span>
+                  <span translate="no" className="font-mono text-[12px]">{c.checkId}</span> <span className="text-[12px] text-muted">v{c.version}</span>
                 </td>
                 <td className="px-3 py-2.5">{c.title}</td>
                 <td className="whitespace-nowrap px-3 py-2.5 text-muted">{c.kind}</td>
@@ -575,26 +607,17 @@ function ChecksTab({ b, raised }: { b: AppBundle; raised: number }) {
 function DocDrawer({ b, d, docId, onClose }: { b: AppBundle; d: Derived; docId: string; onClose: () => void }) {
   const doc = b.documents.find((x) => x.id === docId)!
   const ref = useRef<HTMLButtonElement>(null)
-  useEffect(() => {
-    const prev = document.activeElement as HTMLElement | null
-    ref.current?.focus()
-    const k = (e: KeyboardEvent) => e.key === 'Escape' && onClose()
-    document.addEventListener('keydown', k)
-    return () => {
-      document.removeEventListener('keydown', k)
-      prev?.focus()
-    }
-  }, [onClose])
+  const panel = useDialog<HTMLDivElement>(onClose, ref)
   const s = d.statuses[doc.id]
   const related = b.findings.filter((f) => f.documentId === doc.id)
   return (
-    <div className="fixed inset-0 z-40 flex justify-end bg-ink/40" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
-      <div role="dialog" aria-modal="true" aria-label={doc.typeLabel} className="toast-in flex h-full w-full max-w-[760px] flex-col overflow-y-auto bg-page shadow-[0_0_48px_rgb(22_33_58/0.3)]">
+    <div className="fixed inset-0 z-40 flex justify-end overscroll-contain bg-ink/40" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
+      <div ref={panel} role="dialog" aria-modal="true" aria-label={doc.typeLabel} className="toast-in flex h-full w-full max-w-[760px] flex-col overflow-y-auto overscroll-contain bg-page shadow-[0_0_48px_rgb(22_33_58/0.3)]">
         <div className="sticky top-0 z-10 flex items-center justify-between border-b border-line bg-page px-4 py-3">
           <div>
             <h2 className="text-[16px] font-semibold">{doc.typeLabel}</h2>
             <p className="text-[12px] text-muted">
-              Status: {s.because} · <span className="font-mono">{shortHash(doc.sha256, 16)}</span>
+              Status: {s.because} · <span translate="no" className="font-mono">{shortHash(doc.sha256, 16)}</span>
             </p>
           </div>
           <button ref={ref} onClick={onClose} aria-label="Close document" className="rounded-md p-1.5 text-muted hover:bg-active">

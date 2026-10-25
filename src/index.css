@@ -38,6 +38,40 @@
 @layer base {
   html {
     -webkit-text-size-adjust: 100%;
+    color-scheme: light;
+    -webkit-tap-highlight-color: rgb(42 75 184 / 0.12);
+  }
+  @media (pointer: fine) {
+    html {
+      overscroll-behavior: none;
+    }
+  }
+  button,
+  a,
+  select,
+  input,
+  textarea,
+  label,
+  summary {
+    touch-action: manipulation;
+  }
+  /* Touch screens: every control is at least 44px tall; inputs at 16px so iOS does not zoom. */
+  @media (pointer: coarse) {
+    button:not(.inline-control),
+    select,
+    input:not([type="checkbox"]),
+    a.control {
+      min-height: 44px !important;
+    }
+    input,
+    select,
+    textarea {
+      font-size: 16px !important;
+    }
+  }
+  select {
+    background-color: var(--color-surface);
+    color: var(--color-ink);
   }
   body {
     background: var(--color-page);

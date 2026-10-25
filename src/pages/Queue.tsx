@@ -5,6 +5,7 @@ import { ALERTS, BUNDLES } from '../data'
 import { TopBar } from '../components/TopBar'
 import { BandBadge, RiskBadge } from '../components/RiskBadge'
 import { StatusMiniBar } from '../components/StatusMiniBar'
+import { StatusLegend } from '../components/StatusLegend'
 import { useStore } from '../state/DemoStore'
 import { deriveBundle } from '../lib/derive'
 import { fmtDateTime, fmtDuration, fmtIsoDate } from '../lib/format'
@@ -49,13 +50,38 @@ export default function Queue() {
   const [params, setParams] = useSearchParams()
   const nav = useNavigate()
   const q = params.get('q') ?? ''
-  const [band, setBand] = useState<RiskBand | ''>('')
-  const [region, setRegion] = useState<Region | ''>('')
-  const [category, setCategory] = useState<Category | ''>('')
-  const [cross, setCross] = useState(false)
-  const [sort, setSort] = useState<{ key: SortKey; dir: 1 | -1 }>({ key: 'risk', dir: -1 })
-  const [allAlerts, setAllAlerts] = useState(false)
-  const [showFilters, setShowFilters] = useState(false)
+  // Every filter and the sort live in the URL, so a filtered queue can be shared, refreshed and navigated back to.
+  const setParam = (k: string, v: string | null) => {
+    const next = new URLSearchParams(params)
+    if (v) next.set(k, v)
+    else next.delete(k)
+    setParams(next, { replace: true })
+  }
+  const band = (params.get('band') ?? '') as RiskBand | ''
+  const region = (params.get('region') ?? '') as Region | ''
+  const category = (params.get('category') ?? '') as Category | ''
+  const cross = params.get('cross') === '1'
+  const setBand = (v: RiskBand | '') => setParam('band', v)
+  const setRegion = (v: Region | '') => setParam('region', v)
+  const setCategory = (v: Category | '') => setParam('category', v)
+  const setCross = (v: boolean) => setParam('cross', v ? '1' : null)
+  const sortKey = (['risk', 'submitted', 'findings'].includes(params.get('sort') ?? '') ? params.get('sort') : 'risk') as SortKey
+  const sort = { key: sortKey, dir: (params.get('dir') === 'asc' ? 1 : -1) as 1 | -1 }
+  const setSort = (key: SortKey) => {
+    const dir = sort.key === key ? (sort.dir === 1 ? 'desc' : 'asc') : 'desc'
+    const next = new URLSearchParams(params)
+    if (key === 'risk' && dir === 'desc') {
+      next.delete('sort')
+      next.delete('dir')
+    } else {
+      next.set('sort', key)
+      next.set('dir', dir)
+    }
+    setParams(next, { replace: true })
+  }
+  const allAlerts = params.get('alerts') === 'all'
+  const setAllAlerts = (v: boolean) => setParam('alerts', v ? 'all' : null)
+  const [showFilters, setShowFilters] = useState(Boolean(band || region || category || cross))
 
   const rows = useMemo(() => BUNDLES.map((b) => ({ b, d: deriveBundle(b, reviews) })), [reviews])
 
@@ -89,7 +115,7 @@ export default function Queue() {
               : x.d.openFindings - y.d.openFindings
         return v * sort.dir
       })
-  }, [rows, q, band, region, category, cross, sort])
+  }, [rows, q, band, region, category, cross, sort.key, sort.dir])
 
   const setQ = (v: string) => {
     const next = new URLSearchParams(params)
@@ -101,8 +127,8 @@ export default function Queue() {
   const sortBtn = (key: SortKey, label: string, align: 'left' | 'right' = 'left') => {
     const active = sort.key === key
     return (
-      <th scope="col" aria-sort={active ? (sort.dir === 1 ? 'ascending' : 'descending') : 'none'} className={`px-3 py-2.5 font-normal ${align === 'right' ? 'text-right' : 'text-left'}`}>
-        <button onClick={() => setSort((s) => ({ key, dir: s.key === key ? (s.dir === 1 ? -1 : 1) : -1 }))} className={`inline-flex items-center gap-1 rounded hover:text-ink ${active ? 'text-ink' : ''}`}>
+      <th scope="col" aria-sort={active ? (sort.dir === 1 ? 'ascending' : 'descending') : 'none'} className={`px-2.5 py-2.5 font-normal ${align === 'right' ? 'text-right' : 'text-left'}`}>
+        <button onClick={() => setSort(key)} className={`inline-flex min-h-6 items-center gap-1 rounded hover:text-ink ${active ? 'text-ink' : ''}`}>
           {label}
           {active && (sort.dir === -1 ? <ArrowDown size={13} aria-hidden /> : <ArrowUp size={13} aria-hidden />)}
         </button>
@@ -153,12 +179,16 @@ export default function Queue() {
                   <input
                     value={q}
                     onChange={(e) => setQ(e.target.value)}
-                    placeholder="Institution or application ID"
+                    type="search"
+                    name="q"
+                    autoComplete="off"
+                    spellCheck={false}
+                    placeholder="Institution or application ID…"
                     className="h-9 w-full rounded-md border border-control bg-surface pl-9 pr-3 text-[14px] text-ink outline-none placeholder:text-faint focus:border-action focus:ring-2 focus:ring-action/25"
                   />
                 </span>
               </label>
-              <button onClick={() => setShowFilters((v) => !v)} aria-expanded={showFilters} className="h-9 flex-none rounded-md border border-control bg-surface px-3 text-[14px] font-medium sm:hidden">
+              <button onClick={() => setShowFilters((v) => !v)} aria-expanded={showFilters} className="h-9 flex-none rounded-md border border-control bg-surface px-3 hover:border-ink-2 text-[14px] font-medium sm:hidden">
                 Filters{[band, region, category, cross].filter(Boolean).length ? ` (${[band, region, category, cross].filter(Boolean).length})` : ''}
               </button>
               </div>
@@ -166,7 +196,7 @@ export default function Queue() {
                 <Select label="Risk band" value={band} onChange={setBand} options={[{ v: 'high', l: 'High' }, { v: 'medium', l: 'Medium' }, { v: 'low', l: 'Low' }]} />
                 <Select label="Region" value={region} onChange={setRegion} options={REGIONS.map((r) => ({ v: r, l: r }))} />
                 <Select label="Category" value={category} onChange={setCategory} options={CATEGORIES.map((c) => ({ v: c, l: c }))} />
-                <label className="flex h-9 items-center gap-2 self-end text-[14px]">
+                <label className="flex min-h-9 cursor-pointer items-center gap-2 self-end rounded-md px-1 py-1 text-[14px] hover:bg-raised">
                   <input type="checkbox" checked={cross} onChange={(e) => setCross(e.target.checked)} className="size-4 accent-action" />
                   Has cross-application match
                 </label>
@@ -175,14 +205,8 @@ export default function Queue() {
                 {filtered.length} of {rows.length}
                 {filtersOn && (
                   <button
-                    onClick={() => {
-                      setBand('')
-                      setRegion('')
-                      setCategory('')
-                      setCross(false)
-                      setQ('')
-                    }}
-                    className="ml-2 font-medium text-action hover:underline"
+                    onClick={() => setParams(new URLSearchParams(), { replace: true })}
+                    className="inline-control ml-2 font-medium text-action hover:underline"
                   >
                     Clear filters
                   </button>
@@ -199,21 +223,21 @@ export default function Queue() {
                     <thead className="text-[12px] text-muted">
                       <tr className="border-b border-line">
                         {sortBtn('risk', 'Risk')}
-                        <th scope="col" className="px-3 py-2.5 text-left font-normal">
+                        <th scope="col" className="px-2.5 py-2.5 text-left font-normal">
                           Application
                         </th>
-                        <th scope="col" className="px-3 py-2.5 text-left font-normal">
+                        <th scope="col" className="px-2.5 py-2.5 text-left font-normal">
                           Institution
                         </th>
-                        <th scope="col" className="px-3 py-2.5 text-left font-normal">
+                        <th scope="col" className="px-2.5 py-2.5 text-left font-normal">
                           Category
                         </th>
                         {sortBtn('submitted', 'Submitted', 'right')}
-                        <th scope="col" className="px-3 py-2.5 text-left font-normal">
+                        <th scope="col" className="px-2.5 py-2.5 text-left font-normal">
                           Documents
                         </th>
                         {sortBtn('findings', 'Open', 'right')}
-                        <th scope="col" className="px-3 py-2.5 text-left font-normal">
+                        <th scope="col" className="px-2.5 py-2.5 text-left font-normal">
                           Officer
                         </th>
                       </tr>
@@ -225,27 +249,27 @@ export default function Queue() {
                           onClick={() => nav(`/applications/${b.app.id}`)}
                           className="cursor-pointer border-b border-rule last:border-0 hover:bg-raised"
                         >
-                          <td className="px-3 py-3">
+                          <td className="px-2.5 py-3">
                             <RiskBadge risk={d.risk} />
                           </td>
-                          <td className="whitespace-nowrap px-3 py-3">
-                            <Link to={`/applications/${b.app.id}`} onClick={(e) => e.stopPropagation()} className="font-mono text-[13px] text-action hover:underline">
+                          <td className="whitespace-nowrap px-2.5 py-3">
+                            <Link to={`/applications/${b.app.id}`} onClick={(e) => e.stopPropagation()} translate="no" className="font-mono text-[13px] text-action hover:underline">
                               {b.app.id}
                             </Link>
                           </td>
-                          <td className="min-w-[230px] px-3 py-3">
+                          <td className="min-w-[196px] px-2.5 py-3">
                             <div className="font-medium leading-5">{b.app.institution}</div>
                             <div className="text-[12px] leading-4 text-muted">
                               {b.app.city}, {b.app.state}
                             </div>
                           </td>
-                          <td className="px-3 py-3 leading-5 text-muted">{b.app.category}</td>
-                          <td className="num whitespace-nowrap px-3 py-3 text-right text-muted">{fmtIsoDate(b.app.submittedAt)}</td>
-                          <td className="px-3 py-3">
+                          <td className="min-w-[120px] px-2.5 py-3 leading-5 text-muted">{b.app.category}</td>
+                          <td className="num whitespace-nowrap px-2.5 py-3 text-right text-muted">{fmtIsoDate(b.app.submittedAt)}</td>
+                          <td className="px-2.5 py-3">
                             <StatusMiniBar counts={d.counts} total={b.documents.length} />
                           </td>
-                          <td className="num px-3 py-3 text-right">{d.openFindings === 0 ? <span className="text-faint">0</span> : d.openFindings}</td>
-                          <td className="whitespace-nowrap px-3 py-3 text-muted">{b.app.assignedOfficer}</td>
+                          <td className="num px-2.5 py-3 text-right">{d.openFindings === 0 ? <span className="text-faint">0</span> : d.openFindings}</td>
+                          <td className="whitespace-nowrap px-2.5 py-3 text-muted">{b.app.assignedOfficer}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -259,7 +283,7 @@ export default function Queue() {
                           <span className="min-w-0">
                             <span className="block font-medium leading-5">{b.app.institution}</span>
                             <span className="block text-[13px] leading-5 text-muted">
-                              <span className="font-mono text-[12px]">{b.app.id}</span> · {b.app.city}
+                              <span translate="no" className="font-mono text-[12px]">{b.app.id}</span> · {b.app.city}
                             </span>
                           </span>
                           <span className="flex flex-none items-center gap-1.5">
@@ -277,6 +301,7 @@ export default function Queue() {
                 </ul>
               </>
             )}
+            <StatusLegend />
           </section>
 
           <aside aria-labelledby="alerts-h" className="self-start rounded-lg bg-surface border border-line">
@@ -295,7 +320,7 @@ export default function Queue() {
                       <span className="block text-[12px] leading-4 text-muted">{a.type}</span>
                       <span className="block leading-5">{a.text}</span>
                       <span className="block text-[12px] leading-4 text-muted">
-                        <span className="font-mono">{a.appId}</span> · {fmtDateTime(a.at)}
+                        <span translate="no" className="font-mono">{a.appId}</span> · {fmtDateTime(a.at)}
                       </span>
                     </span>
                   </Link>
@@ -303,7 +328,7 @@ export default function Queue() {
               ))}
             </ul>
             {ALERTS.length > 10 && (
-              <button onClick={() => setAllAlerts((v) => !v)} className="w-full border-t border-rule px-4 py-2.5 text-left text-[13px] font-medium text-action hover:bg-raised">
+              <button onClick={() => setAllAlerts(!allAlerts)} className="w-full border-t border-rule px-4 py-2.5 text-left text-[13px] font-medium text-action hover:bg-raised">
                 {allAlerts ? 'Show the latest 10' : `View all ${ALERTS.length} alerts`}
               </button>
             )}

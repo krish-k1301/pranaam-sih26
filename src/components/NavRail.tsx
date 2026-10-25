@@ -22,8 +22,8 @@ export function Wordmark({ compact = false }: { compact?: boolean }) {
     <div className={`flex ${compact ? 'items-center gap-2' : 'flex-col items-center gap-1.5'}`}>
       <Mark className={compact ? 'size-7' : 'size-8'} />
       <div className={compact ? '' : 'text-center'}>
-        <div className="text-[15px] font-semibold leading-5 text-white">Pramaan</div>
-        <div lang="hi" className={`font-deva text-[12px] font-medium leading-4 text-white/70 ${compact ? 'hidden' : ''}`}>
+        <div translate="no" className="text-[15px] font-semibold leading-5 text-white">Pramaan</div>
+        <div lang="hi" translate="no" className={`font-deva text-[12px] font-medium leading-4 text-white/70 ${compact ? 'hidden' : ''}`}>
           प्रमाण
         </div>
       </div>

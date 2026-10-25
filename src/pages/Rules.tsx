@@ -1,5 +1,6 @@
-import { useEffect, useRef, useState } from 'react'
-import { useSearchParams } from 'react-router-dom'
+import { useCallback, useRef, useState } from 'react'
+import { Link, useSearchParams } from 'react-router-dom'
+import { useDialog } from '../lib/hooks'
 import { Lock, X } from 'lucide-react'
 import { TopBar } from '../components/TopBar'
 import { SeverityMark } from '../components/RiskBadge'
@@ -63,9 +64,9 @@ export default function Rules() {
                   return (
                     <tr key={r.id} onClick={() => setOpen(r.id)} className={`cursor-pointer border-b border-rule last:border-0 hover:bg-raised ${openId === r.id ? 'bg-active' : ''}`}>
                       <td className="whitespace-nowrap px-3 py-3">
-                        <button onClick={(e) => (e.stopPropagation(), setOpen(r.id))} className="font-mono text-[13px] text-action hover:underline">
+                        <Link to={`?rule=${r.id}`} replace onClick={(e) => e.stopPropagation()} translate="no" className="font-mono text-[13px] text-action hover:underline">
                           {r.id}
-                        </button>
+                        </Link>
                       </td>
                       <td className="px-3 py-3 font-medium leading-5">{r.title}</td>
                       <td className="px-3 py-3 leading-5 text-muted">
@@ -104,7 +105,7 @@ export default function Rules() {
                       <StatusTag status={v.status} />
                     </span>
                     <span className="mt-1 flex flex-wrap gap-x-2 text-[13px] text-muted">
-                      <span className="font-mono text-[12px]">{r.id}</span>· v{v.version} · {r.clause} · <SeverityMark severity={v.severity} withLabel />
+                      <span translate="no" className="font-mono text-[12px]">{r.id}</span>· v{v.version} · {r.clause} · <SeverityMark severity={v.severity} withLabel />
                     </span>
                   </button>
                 </li>
@@ -126,31 +127,26 @@ function RulePanel({ r, admin, onClose }: { r: Rule; admin: boolean; onClose: ()
   const [sev, setSev] = useState<Severity>(dr?.severity ?? v.severity)
   const [msg, setMsg] = useState(dr?.message ?? v.message)
   const closeRef = useRef<HTMLButtonElement>(null)
-  useEffect(() => {
-    const prev = document.activeElement as HTMLElement | null
-    closeRef.current?.focus()
-    const k = (e: KeyboardEvent) => e.key === 'Escape' && onClose()
-    document.addEventListener('keydown', k)
-    return () => {
-      document.removeEventListener('keydown', k)
-      prev?.focus()
-    }
-  }, [onClose])
+  const dirty = editing && (sev !== (dr?.severity ?? v.severity) || msg !== (dr?.message ?? v.message))
+  const requestClose = useCallback(() => {
+    if (!dirty || window.confirm('Discard your unsaved changes to this rule?')) onClose()
+  }, [dirty, onClose])
+  const panel = useDialog<HTMLElement>(requestClose, closeRef)
   const shown = dr ?? v
 
   return (
-    <div className="fixed inset-0 z-40 flex justify-end bg-ink/30" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
-      <aside role="dialog" aria-modal="true" aria-labelledby="rule-h" className="toast-in flex h-full w-full max-w-[560px] flex-col overflow-y-auto bg-surface shadow-[0_0_48px_rgb(22_33_58/0.28)]">
+    <div className="fixed inset-0 z-40 flex justify-end overscroll-contain bg-ink/30" onMouseDown={(e) => e.target === e.currentTarget && requestClose()}>
+      <aside ref={panel} role="dialog" aria-modal="true" aria-labelledby="rule-h" className="toast-in flex h-full w-full max-w-[560px] flex-col overflow-y-auto overscroll-contain bg-surface shadow-[0_0_48px_rgb(22_33_58/0.28)]">
         <div className="sticky top-0 z-10 flex items-start justify-between gap-4 border-b border-line bg-surface px-5 py-4">
           <div>
             <p className="flex items-center gap-2 text-[13px] text-muted">
-              <span className="font-mono text-[12px] text-ink">{r.id}</span> · {r.clause}, {r.edition}
+              <span translate="no" className="font-mono text-[12px] text-ink">{r.id}</span> · {r.clause}, {r.edition}
             </p>
             <h2 id="rule-h" className="mt-1 text-[18px] font-semibold leading-6">
               {r.title}
             </h2>
           </div>
-          <button ref={closeRef} onClick={onClose} aria-label="Close rule" className="rounded-md p-1.5 text-muted hover:bg-active">
+          <button ref={closeRef} onClick={requestClose} aria-label="Close rule" className="rounded-md p-1.5 text-muted hover:bg-active hover:text-ink">
             <X size={18} />
           </button>
         </div>
@@ -164,7 +160,7 @@ function RulePanel({ r, admin, onClose }: { r: Rule; admin: boolean; onClose: ()
 
           <section>
             <h3 className="mb-1.5 text-[13px] font-medium">Expression (JSON-Logic)</h3>
-            <pre className="overflow-x-auto rounded-md bg-ink p-3 font-mono text-[12px] leading-[18px] text-[#e7eaf3]">
+            <pre translate="no" className="overflow-x-auto rounded-md bg-ink p-3 font-mono text-[12px] leading-[18px] text-[#e7eaf3]">
               <code>{shown.logic}</code>
             </pre>
             <p className="mt-1 text-[12px] text-muted">A finding is raised when the expression is true.</p>
@@ -182,7 +178,7 @@ function RulePanel({ r, admin, onClose }: { r: Rule; admin: boolean; onClose: ()
                 <label className="block text-[14px] font-medium" htmlFor="sev">
                   Severity
                 </label>
-                <select id="sev" value={sev} onChange={(e) => setSev(e.target.value as Severity)} className="mt-2 h-9 w-full rounded-md border border-control bg-surface px-2.5 outline-none focus:border-action focus:ring-2 focus:ring-action/25">
+                <select id="sev" value={sev} onChange={(e) => setSev(e.target.value as Severity)} className="mt-2 h-9 w-full rounded-md border border-control bg-surface px-2.5 text-ink outline-none focus:border-action focus:ring-2 focus:ring-action/25">
                   {(['info', 'minor', 'major', 'critical'] as Severity[]).map((s) => (
                     <option key={s} value={s}>
                       {s[0].toUpperCase() + s.slice(1)}
@@ -197,7 +193,7 @@ function RulePanel({ r, admin, onClose }: { r: Rule; admin: boolean; onClose: ()
                   Placeholders in braces, such as {'{valid_until}'}, are filled from the document.
                 </p>
                 <div className="mt-4 flex justify-end gap-2">
-                  <button onClick={() => setEditing(false)} className="h-9 rounded-md border border-control px-4 font-medium hover:bg-raised">
+                  <button onClick={() => setEditing(false)} className="h-9 rounded-md border border-control px-4 font-medium hover:border-ink-2 hover:bg-raised">
                     Cancel
                   </button>
                   <button
@@ -213,7 +209,7 @@ function RulePanel({ r, admin, onClose }: { r: Rule; admin: boolean; onClose: ()
               </section>
             ) : (
               <div className="flex flex-wrap gap-2">
-                <button onClick={() => setEditing(true)} className="h-9 rounded-md border border-control px-4 font-medium hover:bg-raised active:translate-y-px">
+                <button onClick={() => setEditing(true)} className="h-9 rounded-md border border-control px-4 font-medium hover:border-ink-2 hover:bg-raised active:translate-y-px">
                   {dr ? `Edit draft v${dr.version}` : 'Edit rule'}
                 </button>
                 {dr && (

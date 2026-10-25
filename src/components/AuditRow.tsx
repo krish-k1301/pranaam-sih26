@@ -9,9 +9,9 @@ export function AuditRow({ e, broken, showApp = true, id }: { e: AuditEvent; bro
       <div className="min-w-0">
         <div className="flex flex-wrap items-baseline gap-x-2">
           <span className="font-medium">{e.type}</span>
-          <span className="font-mono text-[12px] text-muted">{e.subjectId}</span>
+          <span translate="no" className="font-mono text-[12px] text-muted">{e.subjectId}</span>
           {showApp && e.appId && e.appId !== e.subjectId && !e.subjectId.startsWith(e.appId) && (
-            <Link to={`/applications/${e.appId}`} className="font-mono text-[12px] text-action hover:underline">
+            <Link to={`/applications/${e.appId}`} translate="no" className="font-mono text-[12px] text-action hover:underline">
               {e.appId}
             </Link>
           )}
@@ -24,11 +24,11 @@ export function AuditRow({ e, broken, showApp = true, id }: { e: AuditEvent; bro
       </div>
       <dl className="col-start-2 mt-1.5 grid content-start self-start grid-cols-[40px_1fr] gap-x-2 text-[12px] leading-4 lg:col-start-3 lg:mt-0">
         <dt className="text-muted">hash</dt>
-        <dd className={`font-mono ${broken ? 'text-stamp' : ''}`} title={e.hash}>
+        <dd translate="no" className={`font-mono ${broken ? 'text-stamp' : ''}`} title={e.hash}>
           {shortHash(e.hash, 16)}
         </dd>
         <dt className="text-muted">prev</dt>
-        <dd className="font-mono text-muted" title={e.prevHash}>
+        <dd translate="no" className="font-mono text-muted" title={e.prevHash}>
           {shortHash(e.prevHash, 16)}
         </dd>
       </dl>
