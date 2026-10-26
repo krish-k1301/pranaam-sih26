@@ -10,12 +10,12 @@ export function RevisionTimeline({ signedBytes, addedBytes }: { signedBytes: num
         <span className="num text-[12px] text-(--color-muted)">{fmt(total)} bytes in all</span>
       </p>
       <div className="flex h-9 gap-[3px]" role="img" aria-label={`Signed revision bytes 0 to ${fmt(signedBytes)}, later revision adds ${fmt(addedBytes)} bytes not covered by the signature`}>
-        <div className="flex flex-[82] items-center gap-2 rounded-l-[3px] bg-ink px-3 text-[12px] font-medium text-white">
+        <div className="flex flex-[82] items-center gap-2 rounded-l-[3px] bg-ink px-3 text-[12px] font-medium text-surface">
           <Lock size={14} aria-hidden /> Signed
         </div>
         <div
           className="flex flex-[18] items-center justify-center gap-1.5 rounded-r-[3px] text-[12px] font-medium text-st-manual"
-          style={{ background: '#f1ecfb', boxShadow: 'inset 0 0 0 1.5px var(--color-st-manual)' }}
+          style={{ background: 'color-mix(in srgb, var(--color-st-manual) 14%, var(--color-surface))', boxShadow: 'inset 0 0 0 1.5px var(--color-st-manual)' }}
         >
           <Unlock size={14} aria-hidden /> Added
         </div>

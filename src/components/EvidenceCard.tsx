@@ -41,7 +41,7 @@ export function EvidenceCard({ e, onShow }: { e: Evidence; onShow?: (docId: stri
             </Row>
             {onShow && (
               <div className="pt-1.5">
-                <button onClick={() => onShow(e.documentId, e.page, e.fieldKey)} className="text-[13px] font-medium text-action hover:underline">
+                <button onClick={() => onShow(e.documentId, e.page, e.fieldKey)} className="text-[13px] font-medium text-link hover:underline">
                   Show on the document
                 </button>
               </div>
@@ -73,7 +73,7 @@ export function EvidenceCard({ e, onShow }: { e: Evidence; onShow?: (docId: stri
             <Row k="Institution">{e.otherInstitution}</Row>
             <Row k="Application">
               {e.otherAppId.startsWith('A-2027') ? (
-                <Link to={`/applications/${e.otherAppId}`} translate="no" className="font-mono text-[12px] text-action hover:underline">
+                <Link to={`/applications/${e.otherAppId}`} translate="no" className="font-mono text-[12px] text-link hover:underline">
                   {e.otherAppId}
                 </Link>
               ) : (

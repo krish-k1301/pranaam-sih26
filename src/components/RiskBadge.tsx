@@ -7,7 +7,7 @@ const BAND_LABEL: Record<RiskBand, string> = { high: 'High', medium: 'Medium', l
 export function BandBadge({ band }: { band: RiskBand }) {
   const cls =
     band === 'high'
-      ? 'bg-ink text-white'
+      ? 'bg-ink text-surface'
       : band === 'medium'
         ? 'bg-surface text-ink shadow-[inset_0_0_0_1.5px_var(--color-ink)]'
         : 'bg-active text-muted'

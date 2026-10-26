@@ -1,9 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
-import { Bell, ChevronDown, RotateCcw, Search } from 'lucide-react'
+import { Bell, ChevronDown, LogOut, Moon, RotateCcw, Search } from 'lucide-react'
 import { ALERTS, BASE_AUDIT } from '../data'
-import { OFFICER, useStore } from '../state/DemoStore'
-import type { Role } from '../lib/types'
+import { useStore } from '../state/DemoStore'
 import { fmtDateTime } from '../lib/format'
 import { useTitle } from '../lib/hooks'
 import { Wordmark } from './NavRail'
@@ -33,7 +32,7 @@ function usePopover(open: boolean, setOpen: (v: boolean) => void) {
 
 export function TopBar({ title }: { title: string }) {
   useTitle(title)
-  const { role, setRole, reset, reviews, chain } = useStore()
+  const { user, signOut, theme, setTheme, reset, reviews, chain, submissions } = useStore()
   const [params] = useSearchParams()
   const [q, setQ] = useState(params.get('q') ?? '')
   const nav = useNavigate()
@@ -55,7 +54,7 @@ export function TopBar({ title }: { title: string }) {
 
   return (
     <header className="sticky top-0 z-20 border-b border-line bg-page">
-      <div className="flex h-12 items-center gap-3 bg-ink px-4 pt-[env(safe-area-inset-top)] md:hidden">
+      <div className="flex h-12 items-center gap-3 bg-night px-4 pt-[env(safe-area-inset-top)] md:hidden">
         <Link to="/" aria-label="Pramaan, queue" className="control flex items-center">
           <Wordmark compact />
         </Link>
@@ -106,7 +105,7 @@ export function TopBar({ title }: { title: string }) {
                   </li>
                 ))}
               </ul>
-              <Link to="/" onClick={() => setBell(false)} className="mx-4 mt-1 block border-t border-rule pt-2 text-[13px] font-medium text-action hover:underline">
+              <Link to="/" onClick={() => setBell(false)} className="mx-4 mt-1 block border-t border-rule pt-2 text-[13px] font-medium text-link hover:underline">
                 See every alert in the queue
               </Link>
             </div>
@@ -120,35 +119,34 @@ export function TopBar({ title }: { title: string }) {
             aria-controls="user-popover"
             className="flex h-10 items-center gap-2 rounded-md px-1.5 text-left hover:bg-active"
           >
-            <span aria-hidden className="flex size-8 items-center justify-center rounded-full bg-[#dfe5f6] text-[12px] font-semibold text-action-dark">
-              KS
+            <span aria-hidden className="flex size-8 items-center justify-center rounded-full bg-tint-action text-[12px] font-semibold text-link">
+              {user?.initials}
             </span>
             <span className="hidden leading-4 sm:block">
-              <span className="block text-[13px] font-medium">{OFFICER}</span>
-              <span className="block text-[12px] text-muted">{role === 'Scrutiny officer' ? 'Scrutiny officer, Western region' : 'Rule administrator'}</span>
+              <span className="block text-[13px] font-medium">{user?.name}</span>
+              <span className="block text-[12px] text-muted">{user?.detail}</span>
             </span>
             <span className="sr-only">, account & role</span>
             <ChevronDown size={15} className="text-muted" aria-hidden />
           </button>
           {menu && (
             <div id="user-popover" className="absolute right-0 top-12 z-30 w-[288px] rounded-lg bg-surface p-2 shadow-[0_12px_32px_rgb(22_33_58/0.18)] border border-line">
-              <fieldset>
-                <legend className="px-2 pb-1 pt-1 text-[12px] text-muted">Act as</legend>
-                {(['Scrutiny officer', 'Rule administrator'] as Role[]).map((r) => (
-                  <button
-                    key={r}
-                    aria-pressed={role === r}
-                    onClick={() => {
-                      setRole(r)
-                      setMenu(false)
-                    }}
-                    className={`flex w-full items-center justify-between rounded-md px-2 py-2 text-left hover:bg-raised ${role === r ? 'font-medium' : ''}`}
-                  >
-                    {r}
-                    {role === r && <span className="text-[12px] font-normal text-muted">Current</span>}
-                  </button>
-                ))}
-              </fieldset>
+              <p className="px-2 pb-2 pt-1 text-[12px] leading-4 text-muted">
+                Signed in as <span className="font-medium text-ink">{user?.name}</span>
+                <br />
+                {user?.detail}
+              </p>
+              <button
+                onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+                aria-pressed={theme === 'dark'}
+                className="flex w-full items-center justify-between rounded-md px-2 py-2 text-left hover:bg-raised"
+              >
+                <span className="flex items-center gap-2">
+                  <Moon size={15} className="text-muted" aria-hidden />
+                  Dark appearance
+                </span>
+                <span className="text-[12px] text-muted">{theme === 'dark' ? 'On' : 'Off'}</span>
+              </button>
               <div className="my-2 border-t border-rule" />
               {!confirmReset ? (
                 <button onClick={() => setConfirmReset(true)} className="flex w-full items-center gap-2 rounded-md px-2 py-2 text-left hover:bg-raised">
@@ -158,7 +156,7 @@ export function TopBar({ title }: { title: string }) {
               ) : (
                 <div className="rounded-md bg-raised p-2.5" role="group" aria-label="Confirm reset">
                   <p className="text-[13px] leading-5">
-                    This clears {reviewed} {reviewed === 1 ? 'review' : 'reviews'}, any rule drafts & {Math.max(0, chain.length - BASE_AUDIT.length)} audit entries made in this browser.
+                    This clears {reviewed} {reviewed === 1 ? 'review' : 'reviews'}, {submissions.length} portal {submissions.length === 1 ? 'submission' : 'submissions'}, any rule drafts & {Math.max(0, chain.length - BASE_AUDIT.length)} audit entries made in this browser.
                   </p>
                   <div className="mt-2 flex gap-2">
                     <button
@@ -167,7 +165,7 @@ export function TopBar({ title }: { title: string }) {
                         reset()
                         setMenu(false)
                       }}
-                      className="h-8 rounded-md bg-ink px-3 text-[13px] font-medium text-white hover:bg-ink-2"
+                      className="h-8 rounded-md bg-ink px-3 text-[13px] font-medium text-surface hover:bg-ink-2"
                     >
                       Reset demo data
                     </button>
@@ -177,6 +175,17 @@ export function TopBar({ title }: { title: string }) {
                   </div>
                 </div>
               )}
+              <div className="my-2 border-t border-rule" />
+              <button
+                onClick={() => {
+                  signOut()
+                  nav('/login', { replace: true })
+                }}
+                className="flex w-full items-center gap-2 rounded-md px-2 py-2 text-left hover:bg-raised"
+              >
+                <LogOut size={15} className="text-muted" aria-hidden />
+                Sign out
+              </button>
             </div>
           )}
         </div>

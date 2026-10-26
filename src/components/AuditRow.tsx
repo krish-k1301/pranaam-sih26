@@ -4,14 +4,14 @@ import { fmtDateTime, shortHash } from '../lib/format'
 
 export function AuditRow({ e, broken, showApp = true, id }: { e: AuditEvent; broken?: boolean; showApp?: boolean; id?: string }) {
   return (
-    <li id={id} className={`scroll-mt-32 grid grid-cols-[36px_minmax(0,1fr)] gap-x-3 sm:grid-cols-[52px_minmax(0,1fr)] border-b border-rule px-4 py-3 last:border-0 lg:grid-cols-[60px_minmax(0,1fr)_230px] ${broken ? 'bg-[#fbeceb]' : ''}`}>
+    <li id={id} className={`scroll-mt-32 grid grid-cols-[36px_minmax(0,1fr)] gap-x-3 sm:grid-cols-[52px_minmax(0,1fr)] border-b border-rule px-4 py-3 last:border-0 lg:grid-cols-[60px_minmax(0,1fr)_230px] ${broken ? 'bg-tint-danger' : ''}`}>
       <span className={`num pt-px text-right text-[13px] ${broken ? 'font-semibold text-stamp' : 'text-muted'}`}>{e.seq}</span>
       <div className="min-w-0">
         <div className="flex flex-wrap items-baseline gap-x-2">
           <span className="font-medium">{e.type}</span>
           <span translate="no" className="font-mono text-[12px] text-muted">{e.subjectId}</span>
           {showApp && e.appId && e.appId !== e.subjectId && !e.subjectId.startsWith(e.appId) && (
-            <Link to={`/applications/${e.appId}`} translate="no" className="font-mono text-[12px] text-action hover:underline">
+            <Link to={`/applications/${e.appId}`} translate="no" className="font-mono text-[12px] text-link hover:underline">
               {e.appId}
             </Link>
           )}

@@ -6,7 +6,23 @@
 
 This is a frontend-only prototype. It has no backend, and everything runs in the browser from mock data in `src/data/`.
 
+## Sign in
+
+The app opens on a sign-in page. Your account decides where you land:
+
+| Account | Username | Password | Lands on |
+| --- | --- | --- | --- |
+| Scrutiny officer (K. Sharma) | `ksharma` | `officer@2027` | Queue, can act on findings |
+| Rule administrator (R. Venkataraman) | `rvenkat` | `rules@2027` | Queue, can draft and publish rules |
+| Institution | `institute` | `portal@2027` | Institution portal |
+
+Each account can only open its own area; other routes redirect. These are demo credentials checked in the browser. There is no real authentication in this prototype.
+
 ## What it shows
+
+- **Institution portal (`/institute`)**: the application form opens only after the institution name and AICTE permanent ID match the AICTE register. Try **Vindhya Institute of Technology** with `1-4410084461`. Institutions that already applied (for example Sahyadri, `1-4410023317`) see their application status and any rectification requests from AICTE instead.
+  - Upload real PDFs and photos (hashed with SHA-256 in the browser and stored in IndexedDB), or use sample documents for any slot.
+  - On submit, the application appears in the officers' queue with every document at *Verification pending*, and the submission is recorded in the audit chain.
 
 - **Queue (`/`)**: applications sorted by risk score, with a summary strip, filters (risk band, region, category, cross-application match), text search, a document-status mini-bar per application and an alerts panel.
 - **Application review (`/applications/:id`)**: findings grouped by severity, a **document evidence viewer** and an evidence and action panel.
@@ -26,9 +42,9 @@ This is a frontend-only prototype. It has no backend, and everything runs in the
 5. Only officers act on findings, and every action is audited.
 6. Risk score is the sum of severity weights of active findings: info 0, minor 1, major 3, critical 8. The bands are low < 3, medium 3–7, high ≥ 8. The breakdown is always one click away.
 
-### Demo script (about 2 minutes)
+### Demo script (about 3 minutes)
 
-1. Open the queue. **Sahyadri Institute of Technology, Pune (`A-2027-000123`)** leads with a score of 22.
+1. Sign in as `ksharma` and open the queue. **Sahyadri Institute of Technology, Pune (`A-2027-000123`)** leads with a score of 22.
 2. Open it. Click through the findings:
    - the critical faculty match (side by side with Deccan College, Satara)
    - the PDF edited after signing (revision timeline)
@@ -36,7 +52,10 @@ This is a frontend-only prototype. It has no backend, and everything runs in the
    - the expired fire NOC
 3. Select **Printed validity differs from the QR code** and click **Dismiss**. Submitting without a reason is blocked. Add a reason and submit. The accreditation certificate changes from *Mismatch detected* to *Verified*, and the risk score drops to 19.
 4. Open **Audit trail**, then **Audit log**, and press **Verify chain**. Turn on **Simulate tampering**, verify again, and watch it fail at the edited event.
-5. Use **Reset demo data** in the user menu (top right) to start over.
+5. Sign out from the user menu, sign in as `institute`, verify Vindhya Institute of Technology and submit an application. Sign back in as `ksharma`: it is in the queue.
+6. Use **Reset demo data…** in the user menu (top right) to start over.
+
+Dark appearance: the small moon icon at the bottom of the nav rail (or in the user menu, or the corner of the sign-in page). The choice is remembered per browser.
 
 Reviews, rule edits and audit entries are kept in `localStorage`, so a demo survives a refresh. The demo clock runs in January 2027, the scrutiny window for academic year 2027-28. New actions are stamped after the last seeded event.
 

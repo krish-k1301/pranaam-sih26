@@ -38,7 +38,7 @@ export function ReviewDialog({ title, description, label, initial = '', required
   }
 
   return (
-    <div className="fixed inset-0 z-40 flex items-end justify-center overscroll-contain bg-ink/40 p-0 sm:items-center sm:p-6" onMouseDown={(e) => e.target === e.currentTarget && requestClose()}>
+    <div className="fixed inset-0 z-40 flex items-end justify-center overscroll-contain bg-night/50 p-0 sm:items-center sm:p-6" onMouseDown={(e) => e.target === e.currentTarget && requestClose()}>
       <div
         ref={panel}
         role="dialog"

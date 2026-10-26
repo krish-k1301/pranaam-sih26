@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { ArrowDown, ArrowUp, Search } from 'lucide-react'
-import { ALERTS, BUNDLES } from '../data'
+import { ALERTS } from '../data'
 import { TopBar } from '../components/TopBar'
 import { BandBadge, RiskBadge } from '../components/RiskBadge'
 import { StatusMiniBar } from '../components/StatusMiniBar'
@@ -14,7 +14,6 @@ import type { AlertType, Category, Region } from '../lib/types'
 
 type SortKey = 'risk' | 'submitted' | 'findings'
 
-const REGIONS = [...new Set(BUNDLES.map((b) => b.app.region))].sort() as Region[]
 const CATEGORIES: Category[] = ['Extension of approval', 'Increase in intake', 'New course']
 
 const ALERT_MARK: Record<AlertType, string> = {
@@ -46,7 +45,7 @@ function Select<T extends string>({ label, value, options, onChange }: { label: 
 }
 
 export default function Queue() {
-  const { reviews } = useStore()
+  const { reviews, bundles } = useStore()
   const [params, setParams] = useSearchParams()
   const nav = useNavigate()
   const q = params.get('q') ?? ''
@@ -83,7 +82,8 @@ export default function Queue() {
   const setAllAlerts = (v: boolean) => setParam('alerts', v ? 'all' : null)
   const [showFilters, setShowFilters] = useState(Boolean(band || region || category || cross))
 
-  const rows = useMemo(() => BUNDLES.map((b) => ({ b, d: deriveBundle(b, reviews) })), [reviews])
+  const rows = useMemo(() => bundles.map((b) => ({ b, d: deriveBundle(b, reviews) })), [bundles, reviews])
+  const REGIONS = useMemo(() => [...new Set(bundles.map((b) => b.app.region))].sort() as Region[], [bundles])
 
   const summary = useMemo(() => {
     const high = rows.filter((r) => r.d.risk.band === 'high').length
@@ -144,7 +144,7 @@ export default function Queue() {
       <main id="main" className="px-4 pb-10 pt-5 md:px-6">
         <p className="mb-4 max-w-[860px] text-[15px] leading-[22px]">
           {summary.high} applications are high risk.{' '}
-          <Link to={`/applications/${lead.b.app.id}`} className="font-medium text-action hover:underline">
+          <Link to={`/applications/${lead.b.app.id}`} className="font-medium text-link hover:underline">
             {lead.b.app.institution}
           </Link>{' '}
           leads the queue with a score of {lead.d.risk.score}, including a faculty member listed by another institution.
@@ -206,7 +206,7 @@ export default function Queue() {
                 {filtersOn && (
                   <button
                     onClick={() => setParams(new URLSearchParams(), { replace: true })}
-                    className="inline-control ml-2 font-medium text-action hover:underline"
+                    className="inline-control ml-2 font-medium text-link hover:underline"
                   >
                     Clear filters
                   </button>
@@ -253,7 +253,7 @@ export default function Queue() {
                             <RiskBadge risk={d.risk} />
                           </td>
                           <td className="whitespace-nowrap px-2.5 py-3">
-                            <Link to={`/applications/${b.app.id}`} onClick={(e) => e.stopPropagation()} translate="no" className="font-mono text-[13px] text-action hover:underline">
+                            <Link to={`/applications/${b.app.id}`} onClick={(e) => e.stopPropagation()} translate="no" className="font-mono text-[13px] text-link hover:underline">
                               {b.app.id}
                             </Link>
                           </td>
@@ -328,7 +328,7 @@ export default function Queue() {
               ))}
             </ul>
             {ALERTS.length > 10 && (
-              <button onClick={() => setAllAlerts(!allAlerts)} className="w-full border-t border-rule px-4 py-2.5 text-left text-[13px] font-medium text-action hover:bg-raised">
+              <button onClick={() => setAllAlerts(!allAlerts)} className="w-full border-t border-rule px-4 py-2.5 text-left text-[13px] font-medium text-link hover:bg-raised">
                 {allAlerts ? 'Show the latest 10' : `View all ${ALERTS.length} alerts`}
               </button>
             )}

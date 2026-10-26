@@ -1,7 +1,6 @@
 import { useMemo, useRef, useState } from 'react'
 import { Link, useParams, useSearchParams } from 'react-router-dom'
 import { Check, ChevronDown, ChevronRight, Info, X } from 'lucide-react'
-import { getBundle } from '../data'
 import type { AppBundle } from '../data/bundle'
 import { TopBar } from '../components/TopBar'
 import { BandBadge, SeverityMark } from '../components/RiskBadge'
@@ -22,6 +21,7 @@ type Tab = 'findings' | 'documents' | 'checks' | 'audit'
 
 export default function ApplicationReview() {
   const { id = '' } = useParams()
+  const { getBundle } = useStore()
   const bundle = getBundle(id)
   if (!bundle) return <NotFound />
   return <Review key={id} b={bundle} />
@@ -33,7 +33,7 @@ function ReviewChip({ state }: { state: ReviewState }) {
       ? 'bg-surface text-muted shadow-[inset_0_0_0_1px_var(--color-control)]'
       : state === 'dismissed'
         ? 'bg-active text-muted line-through decoration-1'
-        : 'bg-[#e6ebf8] text-action-dark'
+        : 'bg-tint-action text-link'
   return (
     <span key={state} className={`chip-change inline-flex flex-none whitespace-nowrap rounded-[4px] px-1.5 text-[12px] font-medium leading-[18px] ${cls}`}>
       {REVIEW_LABEL[state]}
@@ -152,8 +152,10 @@ function Review({ b }: { b: AppBundle }) {
         {tab === 'findings' &&
           (b.findings.length === 0 ? (
             <p className="rounded-lg bg-surface px-4 py-4 border border-line">
-              No findings. All {b.checks.filter((c) => c.outcome === 'pass').length} checks that apply passed.{' '}
-              <button onClick={() => setTab('documents')} className="font-medium text-action hover:underline">
+              {b.checks.length === 0
+                ? `No findings yet. Automated checks are queued for all ${b.documents.length} documents; findings appear here as they finish.`
+                : `No findings. All ${b.checks.filter((c) => c.outcome === 'pass').length} checks that apply passed.`}{' '}
+              <button onClick={() => setTab('documents')} className="font-medium text-link hover:underline">
                 Review the documents
               </button>
             </p>
@@ -163,7 +165,7 @@ function Review({ b }: { b: AppBundle }) {
               <div ref={viewerRef} className="min-w-0 scroll-mt-28">
                 {selDoc && <Viewer doc={selDoc} status={d.statuses[selDoc.id].status} finding={focus ? undefined : sel} focus={focus ? { page: focus.page, keys: focus.keys } : undefined} />}
                 {focus && (
-                  <button onClick={() => setFocus(null)} className="mt-2 text-[13px] font-medium text-action hover:underline">
+                  <button onClick={() => setFocus(null)} className="mt-2 text-[13px] font-medium text-link hover:underline">
                     Back to the finding’s view
                   </button>
                 )}
@@ -305,7 +307,7 @@ function Header({
           <span className="num min-w-0 flex-1 truncate text-[13px] text-muted">
             {d.risk.items.length === 0 ? 'No active findings' : d.risk.items.filter((i) => i.weight > 0).map((i) => `+${i.weight}`).join(' ') + ` from ${d.risk.items.filter((i) => i.weight > 0).length} active findings`}
           </span>
-          <span className="flex items-center gap-1 text-[13px] font-medium text-action">
+          <span className="flex items-center gap-1 text-[13px] font-medium text-link">
             {showBreakdown ? 'Hide breakdown' : 'Show breakdown'}
             <ChevronDown size={15} className={`transition-transform ${showBreakdown ? 'rotate-180' : ''}`} aria-hidden />
           </span>
@@ -423,7 +425,7 @@ function EvidencePanel({
           <dd>
             <span translate="no" className="font-mono text-[12px]">{f.checkId}</span> <span className="text-muted">v{f.checkVersion}</span>
             {isRule && (
-              <Link to={`/rules?rule=${f.checkId}`} className="ml-2 text-action hover:underline">
+              <Link to={`/rules?rule=${f.checkId}`} className="ml-2 text-link hover:underline">
                 Open rule
               </Link>
             )}
@@ -471,7 +473,7 @@ function EvidencePanel({
             })}
           </div>
         ) : (
-          <p className="mt-3 rounded-md bg-raised px-3 py-2 text-[13px] text-muted">Switch to the scrutiny officer role to act on findings.</p>
+          <p className="mt-3 rounded-md bg-raised px-3 py-2 text-[13px] text-muted">Only scrutiny officers act on findings. You can read every finding & its evidence.</p>
         )}
       </div>
       <h4 className="px-1 pt-1 text-[13px] font-medium">Evidence ({f.evidence.length})</h4>
@@ -502,7 +504,7 @@ function DocumentsTab({ b, d, onOpen }: { b: AppBundle; d: Derived; onOpen: (id:
               return (
                 <tr key={doc.id} onClick={() => onOpen(doc.id)} className="cursor-pointer border-b border-rule align-top last:border-0 hover:bg-raised">
                   <td className="px-3 py-3">
-                    <button onClick={(e) => (e.stopPropagation(), onOpen(doc.id))} className="text-left font-medium leading-5 text-action hover:underline">
+                    <button onClick={(e) => (e.stopPropagation(), onOpen(doc.id))} className="text-left font-medium leading-5 text-link hover:underline">
                       {doc.typeLabel}
                     </button>
                     <div className="text-[12px] leading-4 text-muted">{doc.filename}</div>
@@ -585,6 +587,13 @@ function ChecksTab({ b, raised }: { b: AppBundle; raised: number }) {
             </tr>
           </thead>
           <tbody>
+            {list.length === 0 && (
+              <tr>
+                <td colSpan={6} className="px-3 py-4 text-muted">
+                  {b.checks.length === 0 ? `No checks have run yet. ${b.documents.length} documents are waiting in the automated check queue.` : 'No checks failed or errored.'}
+                </td>
+              </tr>
+            )}
             {list.map((c) => (
               <tr key={c.id} className="border-b border-rule last:border-0">
                 <td className="whitespace-nowrap px-3 py-2.5">
@@ -611,7 +620,7 @@ function DocDrawer({ b, d, docId, onClose }: { b: AppBundle; d: Derived; docId: 
   const s = d.statuses[doc.id]
   const related = b.findings.filter((f) => f.documentId === doc.id)
   return (
-    <div className="fixed inset-0 z-40 flex justify-end overscroll-contain bg-ink/40" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
+    <div className="fixed inset-0 z-40 flex justify-end overscroll-contain bg-night/50" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
       <div ref={panel} role="dialog" aria-modal="true" aria-label={doc.typeLabel} className="toast-in flex h-full w-full max-w-[760px] flex-col overflow-y-auto overscroll-contain bg-page shadow-[0_0_48px_rgb(22_33_58/0.3)]">
         <div className="sticky top-0 z-10 flex items-center justify-between border-b border-line bg-page px-4 py-3">
           <div>

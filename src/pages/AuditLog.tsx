@@ -123,7 +123,7 @@ export default function AuditLog() {
             </ul>
           )}
           {list.length > limit && (
-            <button onClick={() => setLimit((l) => l + 100)} className="num w-full border-t border-rule px-4 py-2.5 text-left text-[13px] font-medium text-action hover:bg-raised">
+            <button onClick={() => setLimit((l) => l + 100)} className="num w-full border-t border-rule px-4 py-2.5 text-left text-[13px] font-medium text-link hover:bg-raised">
               Show older events · {list.length - limit} more
             </button>
           )}

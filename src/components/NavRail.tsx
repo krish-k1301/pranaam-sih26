@@ -1,5 +1,6 @@
 import { NavLink } from 'react-router-dom'
 import { BookCheck, Inbox, ScrollText } from 'lucide-react'
+import { ThemeToggle } from './ThemeToggle'
 
 export const NAV = [
   { to: '/', label: 'Queue', icon: Inbox, end: true },
@@ -33,7 +34,7 @@ export function Wordmark({ compact = false }: { compact?: boolean }) {
 
 export function NavRail() {
   return (
-    <nav aria-label="Main" className="fixed inset-y-0 left-0 z-30 hidden w-[96px] flex-col items-stretch bg-ink py-5 md:flex">
+    <nav aria-label="Main" className="fixed inset-y-0 left-0 z-30 hidden w-[96px] flex-col items-stretch bg-night py-5 md:flex">
       <NavLink to="/" className="mx-auto mb-7 rounded-md px-1">
         <Wordmark />
       </NavLink>
@@ -55,14 +56,17 @@ export function NavRail() {
           </li>
         ))}
       </ul>
-      <p className="mt-auto px-4 text-center text-[11px] leading-4 text-white/60">Synthetic data</p>
+      <div className="mt-auto flex flex-col items-center gap-3">
+        <ThemeToggle className="text-white/55 hover:bg-white/8 hover:text-white" />
+        <p className="px-4 text-center text-[11px] leading-4 text-white/60">Synthetic data</p>
+      </div>
     </nav>
   )
 }
 
 export function BottomBar() {
   return (
-    <nav aria-label="Main" className="fixed inset-x-0 bottom-0 z-30 grid grid-cols-3 bg-ink pb-[env(safe-area-inset-bottom)] md:hidden">
+    <nav aria-label="Main" className="fixed inset-x-0 bottom-0 z-30 grid grid-cols-3 bg-night pb-[env(safe-area-inset-bottom)] md:hidden">
       {NAV.map(({ to, label, icon: Icon, end }) => (
         <NavLink
           key={to}

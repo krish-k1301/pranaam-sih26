@@ -11,7 +11,7 @@ const live = (r: Rule) => r.versions.find((v) => v.status === 'Live') ?? r.versi
 const draft = (r: Rule) => r.versions.find((v) => v.status === 'Draft')
 
 function StatusTag({ status }: { status: 'Live' | 'Draft' | 'Retired' }) {
-  const cls = status === 'Live' ? 'bg-[#e3f1e8] text-[#1f5c39]' : status === 'Draft' ? 'bg-surface text-action shadow-[inset_0_0_0_1px_var(--color-action)]' : 'bg-active text-muted'
+  const cls = status === 'Live' ? 'bg-tint-ok text-ok' : status === 'Draft' ? 'bg-surface text-link shadow-[inset_0_0_0_1px_var(--color-action)]' : 'bg-active text-muted'
   return <span className={`inline-flex flex-none whitespace-nowrap rounded-[4px] px-1.5 text-[12px] font-medium leading-[18px] ${cls}`}>{status}</span>
 }
 
@@ -64,7 +64,7 @@ export default function Rules() {
                   return (
                     <tr key={r.id} onClick={() => setOpen(r.id)} className={`cursor-pointer border-b border-rule last:border-0 hover:bg-raised ${openId === r.id ? 'bg-active' : ''}`}>
                       <td className="whitespace-nowrap px-3 py-3">
-                        <Link to={`?rule=${r.id}`} replace onClick={(e) => e.stopPropagation()} translate="no" className="font-mono text-[13px] text-action hover:underline">
+                        <Link to={`?rule=${r.id}`} replace onClick={(e) => e.stopPropagation()} translate="no" className="font-mono text-[13px] text-link hover:underline">
                           {r.id}
                         </Link>
                       </td>
@@ -79,7 +79,7 @@ export default function Rules() {
                       </td>
                       <td className="num whitespace-nowrap px-3 py-3 text-right">
                         v{v.version}
-                        {dr && <span className="block text-[12px] text-action">v{dr.version} draft</span>}
+                        {dr && <span className="block text-[12px] text-link">v{dr.version} draft</span>}
                       </td>
                       <td className="px-3 py-3">
                         <StatusTag status={v.status} />
@@ -135,7 +135,7 @@ function RulePanel({ r, admin, onClose }: { r: Rule; admin: boolean; onClose: ()
   const shown = dr ?? v
 
   return (
-    <div className="fixed inset-0 z-40 flex justify-end overscroll-contain bg-ink/30" onMouseDown={(e) => e.target === e.currentTarget && requestClose()}>
+    <div className="fixed inset-0 z-40 flex justify-end overscroll-contain bg-night/40" onMouseDown={(e) => e.target === e.currentTarget && requestClose()}>
       <aside ref={panel} role="dialog" aria-modal="true" aria-labelledby="rule-h" className="toast-in flex h-full w-full max-w-[560px] flex-col overflow-y-auto overscroll-contain bg-surface shadow-[0_0_48px_rgb(22_33_58/0.28)]">
         <div className="sticky top-0 z-10 flex items-start justify-between gap-4 border-b border-line bg-surface px-5 py-4">
           <div>
@@ -160,7 +160,7 @@ function RulePanel({ r, admin, onClose }: { r: Rule; admin: boolean; onClose: ()
 
           <section>
             <h3 className="mb-1.5 text-[13px] font-medium">Expression (JSON-Logic)</h3>
-            <pre translate="no" className="overflow-x-auto rounded-md bg-ink p-3 font-mono text-[12px] leading-[18px] text-[#e7eaf3]">
+            <pre translate="no" className="overflow-x-auto rounded-md bg-night p-3 font-mono text-[12px] leading-[18px] text-[#e7eaf3]">
               <code>{shown.logic}</code>
             </pre>
             <p className="mt-1 text-[12px] text-muted">A finding is raised when the expression is true.</p>

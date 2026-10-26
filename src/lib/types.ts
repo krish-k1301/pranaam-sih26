@@ -85,6 +85,8 @@ export interface AppDocument {
   sha256: string
   fields: ExtractedField[]
   photo?: PhotoSpec
+  /** A real file an institution uploaded through the portal (kept in IndexedDB under the document id). */
+  upload?: { name: string; size: number; mime: string }
 }
 
 export type CheckKind =

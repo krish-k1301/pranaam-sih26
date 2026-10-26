@@ -7,6 +7,7 @@ import { SideBySide } from './SideBySide'
 import { PhotoPair } from './PhotoPair'
 import { RevisionTimeline } from './RevisionTimeline'
 import { StatusChip } from './StatusChip'
+import { UploadedFile } from './UploadedFile'
 
 interface Props {
   doc: AppDocument
@@ -27,10 +28,12 @@ export function Viewer({ doc, status, finding, focus }: Props) {
   const mode = focus ? 'document' : (finding?.viewer ?? 'document')
   const highlights = focus?.keys ?? (finding && finding.documentId === doc.id ? finding.fieldKeys : [])
   const cross = finding?.evidence.find((e) => e.kind === 'cross')
-  const paged = (mode === 'document' || mode === 'revision') && !doc.photo
+  const paged = (mode === 'document' || mode === 'revision') && !doc.photo && !doc.upload
 
   let body: React.ReactNode
-  if (mode === 'cross' && cross?.kind === 'cross' && cross.otherDocumentId) {
+  if (doc.upload) {
+    body = <UploadedFile doc={doc} />
+  } else if (mode === 'cross' && cross?.kind === 'cross' && cross.otherDocumentId) {
     const other = getDocument(cross.otherDocumentId)
     const key = finding!.fieldKeys[0]
     body = other ? (
@@ -57,7 +60,7 @@ export function Viewer({ doc, status, finding, focus }: Props) {
   }
 
   return (
-    <section aria-label="Document evidence viewer" className="min-w-0 overflow-hidden rounded-lg bg-ink text-white">
+    <section aria-label="Document evidence viewer" className="min-w-0 overflow-hidden rounded-lg bg-night text-white">
       <div className="flex flex-wrap items-center gap-x-3 gap-y-2 border-b border-white/10 px-4 py-2.5">
         <div className="min-w-0 basis-full sm:basis-auto sm:flex-1">
           <div className="truncate text-[14px] font-medium leading-5">{doc.typeLabel}</div>
@@ -65,7 +68,7 @@ export function Viewer({ doc, status, finding, focus }: Props) {
             {doc.filename} · {doc.issuer}
           </div>
         </div>
-        <span className="rounded-[5px] bg-white p-[1px]">
+        <span className="rounded-[5px] bg-surface p-[1px]">
           <StatusChip status={status} />
         </span>
         <div className="flex items-center gap-1">
@@ -83,7 +86,7 @@ export function Viewer({ doc, status, finding, focus }: Props) {
             </>
           )}
           {paged && doc.pages === 1 && <span className="px-2 text-[13px] text-white/70">Page 1 of 1</span>}
-          {mode !== 'photo' && mode !== 'cross' && !doc.photo && (
+          {mode !== 'photo' && mode !== 'cross' && !doc.photo && !doc.upload && (
             <div className="ml-1 flex rounded-md bg-white/8 p-0.5" role="group" aria-label="Zoom">
               {(['fit', '100'] as const).map((z) => (
                 <button

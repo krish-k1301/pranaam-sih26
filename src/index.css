@@ -15,6 +15,12 @@
   --color-control: #c9ccc4;
   --color-action: #2a4bb8;
   --color-action-dark: #203b93;
+  --color-link: #2a4bb8;
+  --color-night: #16213a;
+  --color-tint-action: #e6ebf8;
+  --color-tint-danger: #fbeceb;
+  --color-tint-ok: #e3f1e8;
+  --color-ok: #1f5c39;
   --color-stamp: #b3261e;
   --color-manila: #eadfc2;
   --color-manila-edge: #d9cba6;
@@ -33,6 +39,40 @@
   --font-mono: 'IBM Plex Mono', ui-monospace, monospace;
 
   --ease-out: cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+
+/* Dark appearance: the government file at night. Paper stays paper. */
+:root[data-theme="dark"] {
+  --color-page: #0f141d;
+  --color-surface: #161c27;
+  --color-raised: #1b2230;
+  --color-active: #252e3f;
+  --color-ink: #e7eaf0;
+  --color-ink-2: #c9cfdb;
+  --color-muted: #a5adbb;
+  --color-faint: #8e97a7;
+  --color-line: #2a3242;
+  --color-rule: #212938;
+  --color-control: #3b4558;
+  --color-action: #3a5bd6;
+  --color-action-dark: #4b6be2;
+  --color-link: #a4b6ff;
+  --color-night: #0a0f19;
+  --color-stamp: #ff7b72;
+  --color-tint-action: #1f2a4d;
+  --color-tint-danger: #3a1f22;
+  --color-tint-ok: #173023;
+  --color-ok: #86d6a6;
+  --color-st-verified: #5cc48a;
+  --color-st-mismatch: #ff7b72;
+  --color-st-expired: #f0a35a;
+  --color-st-manual: #b598ff; /* taste-skill-ignore: dark variant of the brief's manual-review status colour */
+  --color-st-source: #a5adb9;
+  --color-st-pending: #8fa6ff;
+  color-scheme: dark;
+}
+:root[data-theme="dark"] ::selection {
+  background: #2f3f73;
 }
 
 @layer base {

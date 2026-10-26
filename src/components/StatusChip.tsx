@@ -19,7 +19,7 @@ export function StatusChip({ status, className = '' }: { status: DocStatus; clas
       className={`chip-change inline-flex flex-none items-center gap-1.5 whitespace-nowrap rounded-[4px] px-2 py-[2px] text-[12px] font-medium leading-[18px] ${className}`}
       style={{
         color: hue,
-        background: outlined ? 'var(--color-surface)' : `color-mix(in srgb, ${hue} 10%, white)`,
+        background: outlined ? 'var(--color-surface)' : `color-mix(in srgb, ${hue} 12%, var(--color-surface))`,
         boxShadow: outlined ? `inset 0 0 0 1px ${hue}` : undefined,
       }}
     >
